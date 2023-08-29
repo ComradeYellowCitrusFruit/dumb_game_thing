@@ -1,7 +1,9 @@
 use std::ops::{Index, IndexMut};
 
+use crate::ai::Color;
+
 #[derive(Clone, Copy)]
-enum PieceType {
+pub enum PieceType {
     WhitePawn,
     BlackPawn,
     WhiteBishop,
@@ -28,7 +30,8 @@ impl PieceType {
     }
 }
 
-struct Board {
+#[derive(Copy, Clone)]
+pub struct Board {
     pieces: [PieceType; 64],
     none: PieceType,
 }
@@ -82,6 +85,179 @@ impl Board {
         b[coords_from_an(('d', 0))] = PieceType::BlackQueen;
         b[coords_from_an(('e', 0))] = PieceType::BlackKing;
 
+        b
+    }
+
+    pub fn generate_positions(&self, color_to_move: Color) -> Vec<Board> {
+        let mut b  = Vec::<Board>::new();
+
+        match color_to_move {
+            Color::White => {
+                'x_loop: for x in 0..8usize {
+                    'y_loop: for y in 0..8usize {
+                        match self[(x, y)] {
+                            PieceType::WhitePawn => {
+                                if self[(x, y - 1)] as i32 == PieceType::Blank as i32 {
+                                    let mut tmp = *self;
+                                    tmp[(x, y)] = PieceType::Blank;
+                                    tmp[(x, y - 1)] = PieceType::WhitePawn;
+                                    b.push(tmp);
+                                }
+
+                                if self[(x, y - 2)] as i32 == PieceType::Blank as i32 && y == 6 {
+                                    let mut tmp = *self;
+                                    tmp[(x, y)] = PieceType::Blank;
+                                    tmp[(x, y - 2)] = PieceType::WhitePawn;
+                                    b.push(tmp);
+                                }
+
+                                if self[(x - 1, y - 1)].is_black() {
+                                    let mut tmp = *self;
+                                    tmp[(x, y)] = PieceType::Blank;
+                                    tmp[(x - 1, y - 1)] = PieceType::WhitePawn;
+                                    b.push(tmp);
+                                }
+
+                                if self[(x + 1, y - 1)].is_black() {
+                                    let mut tmp = *self;
+                                    tmp[(x, y)] = PieceType::Blank;
+                                    tmp[(x + 1, y - 1)] = PieceType::WhitePawn;
+                                    b.push(tmp);
+                                }
+                            },
+                            PieceType::WhiteKnight => {
+                                if self[(x - 2, y - 1)] as i32 == PieceType::Blank as i32 || self[(x - 2, y - 1)].is_black() {
+                                    let mut tmp = *self;
+                                    tmp[(x, y)] = PieceType::Blank;
+                                    tmp[(x - 2, y - 1)] = PieceType::WhiteKnight;
+                                    b.push(tmp);
+                                }
+
+                                if self[(x + 2, y + 1)] as i32 == PieceType::Blank as i32 || self[(x - 2, y - 1)].is_black() {
+                                    let mut tmp = *self;
+                                    tmp[(x, y)] = PieceType::Blank;
+                                    tmp[(x + 2, y + 1)] = PieceType::WhiteKnight;
+                                    b.push(tmp);
+                                }
+
+                                if self[(x - 2, y + 1)] as i32 == PieceType::Blank as i32 || self[(x - 2, y - 1)].is_black() {
+                                    let mut tmp = *self;
+                                    tmp[(x, y)] = PieceType::Blank;
+                                    tmp[(x - 2, y + 1)] = PieceType::WhiteKnight;
+                                    b.push(tmp);
+                                }
+
+                                if self[(x + 2, y - 1)] as i32 == PieceType::Blank as i32 || self[(x - 2, y - 1)].is_black() {
+                                    let mut tmp = *self;
+                                    tmp[(x, y)] = PieceType::Blank;
+                                    tmp[(x + 2, y - 1)] = PieceType::WhiteKnight;
+                                    b.push(tmp);
+                                }
+
+                                if self[(x - 1, y - 2)] as i32 == PieceType::Blank as i32 || self[(x - 2, y - 1)].is_black() {
+                                    let mut tmp = *self;
+                                    tmp[(x, y)] = PieceType::Blank;
+                                    tmp[(x - 1, y - 2)] = PieceType::WhiteKnight;
+                                    b.push(tmp);
+                                }
+
+                                if self[(x + 1, y + 2)] as i32 == PieceType::Blank as i32 || self[(x - 2, y - 1)].is_black() {
+                                    let mut tmp = *self;
+                                    tmp[(x, y)] = PieceType::Blank;
+                                    tmp[(x + 1, y + 2)] = PieceType::WhiteKnight;
+                                    b.push(tmp);
+                                }
+
+                                if self[(x - 1, y + 2)] as i32 == PieceType::Blank as i32 || self[(x - 2, y - 1)].is_black() {
+                                    let mut tmp = *self;
+                                    tmp[(x, y)] = PieceType::Blank;
+                                    tmp[(x - 1, y - 2)] = PieceType::WhiteKnight;
+                                    b.push(tmp);
+                                }
+
+                                if self[(x + 1, y - 2)] as i32 == PieceType::Blank as i32 || self[(x - 2, y - 1)].is_black() {
+                                    let mut tmp = *self;
+                                    tmp[(x, y)] = PieceType::Blank;
+                                    tmp[(x - 1, y - 2)] = PieceType::WhiteKnight;
+                                    b.push(tmp);
+                                }
+                            },
+                            PieceType::WhiteRook => {
+                                let mut up_clear = true;
+                                let mut down_clear = true;
+
+                                for i in 0..8 {
+                                    let u = (x, y - i);
+                                    let l = (x, y + i);
+
+                                    if up_clear && self[u] as i32 != PieceType::OffBoard as i32 && !self[u].is_white() {
+                                        let mut tmp = *self;
+                                        tmp[(x, y)] = PieceType::Blank;
+                                        tmp[u] = PieceType::WhiteRook;
+                                        b.push(tmp);
+
+                                        if self[u].is_black() {
+                                            up_clear = false;
+                                        }
+                                    }
+
+                                    if down_clear && self[l] as i32 != PieceType::OffBoard as i32 && !self[l].is_white() {
+                                        let mut tmp = *self;
+                                        tmp[(x, y)] = PieceType::Blank;
+                                        tmp[l] = PieceType::WhiteRook;
+                                        b.push(tmp);
+
+                                        if self[l].is_black() {
+                                            down_clear = false;
+                                        }
+                                    }
+
+                                    if !up_clear && !down_clear {
+                                        break;
+                                    }
+                                }
+
+                                up_clear = true;
+                                down_clear = true;
+
+                                for i in 0..8 {
+                                    let r = (x - i, y);
+                                    let l = (x + i, y);
+
+                                    if up_clear && self[r] as i32 != PieceType::OffBoard as i32 && !self[r].is_white() {
+                                        let mut tmp: Board = *self;
+                                        tmp[(x, y)] = PieceType::Blank;
+                                        tmp[r] = PieceType::WhiteRook;
+                                        b.push(tmp);
+
+                                        if self[r].is_black() {
+                                            up_clear = false;
+                                        }
+                                    }
+
+                                    if down_clear && self[l] as i32 != PieceType::OffBoard as i32 && !self[l].is_white() {
+                                        let mut tmp = *self;
+                                        tmp[(x, y)] = PieceType::Blank;
+                                        tmp[l] = PieceType::WhiteRook;
+                                        b.push(tmp);
+
+                                        if self[l].is_black() {
+                                            down_clear = false;
+                                        }
+                                    }
+
+                                    if !up_clear && !down_clear {
+                                        break;
+                                    }
+                                }
+                            },
+                            _ => { continue 'y_loop; }
+                        }
+                    }
+                }
+            },
+            Color::Black => {},
+        }
         b
     }
 }
